@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.tde.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.lawmatics_tde.tde_alldata_delta`;

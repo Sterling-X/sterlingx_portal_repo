@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.aurit_mediation.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_auritmediation.stg_webhook_wordpress_aurit_contactform_expanded`;

@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.vdl.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_vdl.stg_webhook_wordpress_vasquez_de_lara_contactform_expanded`;
