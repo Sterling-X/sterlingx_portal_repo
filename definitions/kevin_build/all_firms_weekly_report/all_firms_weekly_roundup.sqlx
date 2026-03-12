@@ -1,0 +1,79 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.all_clients.Client_Weekly_Pacing_Roundup`
+PARTITION BY week_starting
+CLUSTER BY client_id, week_starting
+OPTIONS (require_partition_filter = false)
+AS
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.aurit_mediation.aurit_mediation_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.scott_m_brown.scott_m_brown_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.tde.tde_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.vdl.vdl_weekly_roundup_table`;
