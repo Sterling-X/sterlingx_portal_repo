@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.aurit_mediation.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.salesforce_auritmediation.auritmediation_alldata_delta`;
