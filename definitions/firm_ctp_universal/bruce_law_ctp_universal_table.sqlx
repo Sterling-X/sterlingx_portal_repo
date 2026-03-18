@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.bruce_law.ctp_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.callrail_brucelaw.callrail_alldata_delta`;

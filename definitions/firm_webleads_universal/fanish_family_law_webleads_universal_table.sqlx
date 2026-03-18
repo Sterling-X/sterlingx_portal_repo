@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.fanishe_family_law.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_fanashfamilylaw.stg_webhook_wordpress_fanash_contactform_expanded`;

@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.bruce_law.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.clio_brucelaw.clio_alldata_delta`;
