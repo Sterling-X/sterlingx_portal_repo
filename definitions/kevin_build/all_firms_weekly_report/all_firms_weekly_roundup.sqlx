@@ -76,4 +76,61 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.vdl.vdl_weekly_roundup_table`;
+FROM `sterlingx-insights.vdl.vdl_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.johnson_law_group.johnson_law_group_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.mayer_pink.meyer_pink_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.kalish_and_jaggars.kalish_and_jaggars_weekly_roundup_table`;

@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.kalish_and_jaggars.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.leaddocket_kalishandjaggars.initialdata_delta`;

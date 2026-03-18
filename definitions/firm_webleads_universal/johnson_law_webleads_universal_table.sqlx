@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.johnson_law_group.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_johnsonlawgroup.stg_webhook_wordpress_johnson_contactform_expanded`;

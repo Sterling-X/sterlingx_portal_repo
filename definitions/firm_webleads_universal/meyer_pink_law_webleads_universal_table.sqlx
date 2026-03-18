@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.mayer_pink.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_meyerpink.stg_webhook_wordpress_meyerpink_contactform_expanded`;

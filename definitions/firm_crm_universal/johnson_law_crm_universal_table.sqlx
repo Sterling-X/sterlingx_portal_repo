@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.johnson_law_group.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.unbounce_johnson.johnson_alldata_delta`;
