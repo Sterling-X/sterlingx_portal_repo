@@ -1,0 +1,121 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.lancaster.lancaster_weekly_roundup_table`
+PARTITION BY week_starting
+OPTIONS (require_partition_filter = false)
+AS
+
+WITH
+
+-- ── CRM: Calls ──────────────────────────────────────────────────────────────
+calls AS (
+  SELECT
+    DATE_TRUNC(DATE(start_datetime), WEEK(SUNDAY)) AS week_starting,
+    COUNTIF(Direction = 'inbound' AND Answered = TRUE)  AS answered_calls,
+    COUNTIF(Direction = 'inbound' AND Answered = FALSE) AS missed_calls,
+    COUNTIF(Direction = 'inbound')                      AS total_calls
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023'
+    AND start_datetime IS NOT NULL
+  GROUP BY 1
+),
+
+-- ── CRM: Leads ───────────────────────────────────────────────────────────────
+leads AS (
+  SELECT
+    DATE_TRUNC(DATE(Lead_Create_Date), WEEK(SUNDAY)) AS week_starting,
+    COUNT(DISTINCT Lead_Unique_ID) AS leads
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023'
+    AND Lead_Unique_ID IS NOT NULL
+    AND Lead_Create_Date IS NOT NULL
+  GROUP BY 1
+),
+
+-- ── CRM: Pipeline Stages ─────────────────────────────────────────────────────
+pipeline AS (
+  SELECT
+    -- QPC
+    DATE_TRUNC(QPC, WEEK(SUNDAY))                    AS week_starting_qpc,
+    COUNT(CASE WHEN QPC IS NOT NULL THEN Lead_Unique_ID END) AS qualified_potential_clients,
+    -- Consultation Scheduled
+    DATE_TRUNC(Consultation_Date, WEEK(SUNDAY))      AS week_starting_cs,
+    COUNT(CASE WHEN Consultation_Date IS NOT NULL THEN Lead_Unique_ID END) AS consultation_scheduled,
+    -- Consultation Completed
+    DATE_TRUNC(Consult_Completed_Date, WEEK(SUNDAY)) AS week_starting_cc,
+    COUNT(CASE WHEN Consult_Completed_Date IS NOT NULL THEN Lead_Unique_ID END) AS consultation_completed,
+    -- Funded
+    DATE_TRUNC(Retainer_Funded_Date, WEEK(SUNDAY))   AS week_starting_fa,
+    COUNT(CASE WHEN Retainer_Funded_Date IS NOT NULL THEN Lead_Unique_ID END) AS funded_agreements
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023'
+  GROUP BY 1, 3, 5, 7
+),
+
+qpc AS (
+  SELECT DATE_TRUNC(QPC, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS qualified_potential_clients
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023' AND QPC IS NOT NULL
+  GROUP BY 1
+),
+consult_sched AS (
+  SELECT DATE_TRUNC(Consultation_Date, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS consultation_scheduled
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023' AND Consultation_Date IS NOT NULL
+  GROUP BY 1
+),
+consult_comp AS (
+  SELECT DATE_TRUNC(Consult_Completed_Date, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS consultation_completed
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023' AND Consult_Completed_Date IS NOT NULL
+  GROUP BY 1
+),
+funded AS (
+  SELECT DATE_TRUNC(Retainer_Funded_Date, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS funded_agreements
+  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
+  WHERE Firm_Unique_ID = 'lancaster-1023' AND Retainer_Funded_Date IS NOT NULL
+  GROUP BY 1
+),
+
+-- ── Web Forms ────────────────────────────────────────────────────────────────
+web_forms AS (
+  SELECT
+    DATE_TRUNC(DATE(received_at), WEEK(SUNDAY)) AS week_starting,
+    COUNT(*) AS web_form_submissions
+  FROM `rc-datamart-forms-webhook.webhook_wordpress_lancasterlawgroup.stg_webhook_wordpress_lancaster_contactform_expanded`
+  WHERE received_at IS NOT NULL
+  GROUP BY 1
+),
+
+-- ── All Weeks Spine ──────────────────────────────────────────────────────────
+all_weeks AS (
+  SELECT week_starting FROM calls
+  UNION DISTINCT SELECT week_starting FROM leads
+  UNION DISTINCT SELECT week_starting FROM qpc
+  UNION DISTINCT SELECT week_starting FROM consult_sched
+  UNION DISTINCT SELECT week_starting FROM consult_comp
+  UNION DISTINCT SELECT week_starting FROM funded
+  UNION DISTINCT SELECT week_starting FROM web_forms
+)
+
+SELECT
+  '331dae6a-d0e7-48fe-866e-b068ec98059e'    AS client_id,
+  'Lancaster'                               AS client_name,
+  w.week_starting,
+  COALESCE(c.answered_calls, 0)             AS answered_calls,
+  COALESCE(c.missed_calls, 0)               AS missed_calls,
+  COALESCE(c.total_calls, 0)                AS total_calls,
+  COALESCE(wf.web_form_submissions, 0)      AS web_form_submissions,
+  COALESCE(l.leads, 0)                      AS leads,
+  COALESCE(q.qualified_potential_clients,0) AS qualified_potential_clients,
+  COALESCE(cs.consultation_scheduled, 0)    AS consultation_scheduled,
+  COALESCE(cc.consultation_completed, 0)    AS consultation_completed,
+  COALESCE(f.funded_agreements, 0)          AS funded_agreements,
+  CURRENT_TIMESTAMP()                        AS created_at,
+  CURRENT_TIMESTAMP()                        AS updated_at
+FROM all_weeks w
+LEFT JOIN calls          c  ON c.week_starting  = w.week_starting
+LEFT JOIN leads          l  ON l.week_starting  = w.week_starting
+LEFT JOIN qpc            q  ON q.week_starting  = w.week_starting
+LEFT JOIN consult_sched  cs ON cs.week_starting = w.week_starting
+LEFT JOIN consult_comp   cc ON cc.week_starting = w.week_starting
+LEFT JOIN funded         f  ON f.week_starting  = w.week_starting
+LEFT JOIN web_forms      wf ON wf.week_starting = w.week_starting;

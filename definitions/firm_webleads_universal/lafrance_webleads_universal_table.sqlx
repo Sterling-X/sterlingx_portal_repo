@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.lafrance.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_lafrancelaw.stg_webhook_wordpress_lafrance_contactform_expanded`;

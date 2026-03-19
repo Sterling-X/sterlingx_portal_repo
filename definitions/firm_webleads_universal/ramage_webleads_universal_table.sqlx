@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.the_ramage_law_group.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_ramagefamilylaw.stg_webhook_wordpress_ramage_contactform_expanded`;

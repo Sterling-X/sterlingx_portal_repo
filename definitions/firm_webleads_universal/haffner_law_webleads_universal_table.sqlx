@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.haffner_law.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_haffner.stg_webhook_wordpress_haffner_contactform_expanded`;

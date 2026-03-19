@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.lancaster.webleads_raw_data` AS
+SELECT * FROM `rc-datamart-forms-webhook.webhook_wordpress_lancasterlawgroup.stg_webhook_wordpress_lancaster_contactform_expanded`;
