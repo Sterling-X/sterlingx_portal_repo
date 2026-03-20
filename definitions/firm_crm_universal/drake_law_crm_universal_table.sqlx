@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.drake_law_firm.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.clio_drake.alldata_delta`;

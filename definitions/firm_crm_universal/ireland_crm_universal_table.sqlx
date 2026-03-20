@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.michael_ireland_associates.crm_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.mycase_ireland.ireland_initial_alldata_delta`;

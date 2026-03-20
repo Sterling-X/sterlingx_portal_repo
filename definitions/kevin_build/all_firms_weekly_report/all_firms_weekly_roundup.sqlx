@@ -171,4 +171,194 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.fanishe_family_law.fanish_family_law_weekly_roundup_table`;
+FROM `sterlingx-insights.fanishe_family_law.fanish_family_law_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.arizona_family_law.arizona_family_law_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.cutrer.cutrer_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.drake_law_firm.drake_law_firm_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.gjesdahl_law.gjesdahl_law_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.haffner_law.haffner_law_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.lafrance.lafrance_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.lancaster.lancaster_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.michael_ireland_associates.ireland_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.sterling_lawyers.sterling_lawyers_weekly_roundup_table`
+
+UNION ALL
+
+SELECT
+  client_id,
+  client_name,
+  week_starting,
+  answered_calls,
+  missed_calls,
+  total_calls,
+  web_form_submissions,
+  leads,
+  qualified_potential_clients,
+  consultation_scheduled,
+  consultation_completed,
+  funded_agreements,
+  created_at,
+  updated_at
+FROM `sterlingx-insights.the_ramage_law_group.ramage_law_weekly_roundup_table`;
