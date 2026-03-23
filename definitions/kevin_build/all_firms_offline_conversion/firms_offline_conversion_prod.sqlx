@@ -1,0 +1,32 @@
+-- Johnson
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.johnson_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.johnson_origin_conversion_events`;
+
+-- Meyerpink
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.meyerpink_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.meyerpink_origin_conversion_events`;
+
+-- Kalish and Jaggars
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.kalishandjaggars_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.kalishandjaggars_origin_conversion_events`;
+
+-- Aurit Mediation
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.auritmediation_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.auritmediation_origin_conversion_events`;
+
+-- VDL
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.vdl_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.vdl_origin_conversion_events`;
+
+-- TDE
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.tde_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.tde_origin_conversion_events`;
+
+-- SMB
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.smb_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.smb_origin_conversion_events`;
+
+-- SLO
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_offline_conversion.slo_offline_conversion` AS 
+SELECT * FROM `rc-datamart-report-082025.firms_origin_conversion_events.slo_origin_conversion_events`;
+

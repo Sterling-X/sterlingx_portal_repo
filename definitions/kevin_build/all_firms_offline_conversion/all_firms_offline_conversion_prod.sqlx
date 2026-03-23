@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.all_clients_offline_conversion.all_firms_offline_conversion` AS
+SELECT * FROM `rc-datamart-report-082025.client_origin_conversion_events.all_firms_conversion_events`;

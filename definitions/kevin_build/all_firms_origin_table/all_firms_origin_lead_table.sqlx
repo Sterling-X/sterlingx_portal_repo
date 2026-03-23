@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.all_clients_origin_table.all_clients_origin_lead_table` AS
+SELECT * FROM `rc-datamart-report-082025.client_origin_lead_table.all_firms_origin_lead_table`;

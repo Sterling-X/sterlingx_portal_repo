@@ -1,0 +1,24 @@
+-- Johnson Law Group
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.johnson_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.johnson_origin_lead_table`;
+-- Meyerpink
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.meyerpink_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.meyerpink_origin_lead_table`;
+-- Kalish & Jaggars
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.kalishandjaggars_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.kalishandjaggars_origin_lead_table`;
+-- Aurit Mediation
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.auritmediation_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.auritmediation_origin_lead_table`;
+-- Vasquez de Lara (VDL)
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.vdl_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.vdl_origin_lead_table`;
+-- TDE Family Law
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.tde_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.tde_origin_lead_table`;
+-- Scott M Brown (SMB)
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.smb_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.smb_origin_lead_table`;
+-- Sterling Lawyers (SLO)
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_origin_table.slo_origin_table` AS
+SELECT * FROM `rc-datamart-report-082025.firms_origin_lead_table.slo_origin_lead_table`;
