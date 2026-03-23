@@ -3,119 +3,154 @@ PARTITION BY week_starting
 OPTIONS (require_partition_filter = false)
 AS
 
-WITH
-
--- ── CRM: Calls ──────────────────────────────────────────────────────────────
-calls AS (
+WITH 
+s AS (
   SELECT
-    DATE_TRUNC(DATE(start_datetime), WEEK(SUNDAY)) AS week_starting,
-    COUNTIF(Direction = 'inbound' AND Answered = TRUE)  AS answered_calls,
-    COUNTIF(Direction = 'inbound' AND Answered = FALSE) AS missed_calls,
-    COUNTIF(Direction = 'inbound')                      AS total_calls
-  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010'
-    AND start_datetime IS NOT NULL
-  GROUP BY 1
+    DATE(COALESCE(
+      SAFE_CAST(lead_CreatedDate AS TIMESTAMP),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%Ez', SAFE_CAST(lead_CreatedDate AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%Ez', SAFE_CAST(lead_CreatedDate AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S UTC',  SAFE_CAST(lead_CreatedDate AS STRING))
+    ), 'America/New_York') AS lead_created_central_d,
+    DATE(COALESCE(
+      SAFE_CAST(opportunity_CreatedDate AS TIMESTAMP),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%Ez', SAFE_CAST(opportunity_CreatedDate AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%Ez', SAFE_CAST(opportunity_CreatedDate AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S UTC',  SAFE_CAST(opportunity_CreatedDate AS STRING))
+    ), 'America/New_York') AS opportunity_created_central_d,
+    DATE(COALESCE(
+      SAFE_CAST(opportunity_Consult_Date_Time__c AS TIMESTAMP),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%Ez', SAFE_CAST(opportunity_Consult_Date_Time__c AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%Ez', SAFE_CAST(opportunity_Consult_Date_Time__c AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S UTC',  SAFE_CAST(opportunity_Consult_Date_Time__c AS STRING))
+    ), 'America/New_York') AS consult_start_central_d,
+    DATE(COALESCE(
+      SAFE_CAST(consult_CreatedDate AS TIMESTAMP),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%Ez', SAFE_CAST(consult_CreatedDate AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%Ez', SAFE_CAST(consult_CreatedDate AS STRING)),
+      SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S UTC',  SAFE_CAST(consult_CreatedDate AS STRING))
+    ), 'America/New_York') AS consult_created_central_d,
+    COALESCE(
+      SAFE_CAST(lead_Referred_Out_Date__c AS DATE),
+      SAFE.PARSE_DATE('%Y-%m-%d', SAFE_CAST(lead_Referred_Out_Date__c AS STRING)),
+      SAFE.PARSE_DATE('%m/%d/%Y', SAFE_CAST(lead_Referred_Out_Date__c AS STRING)),
+      SAFE.PARSE_DATE('%Y-%m-%d.', SAFE_CAST(lead_Referred_Out_Date__c AS STRING))
+    ) AS lead_referred_out_d,
+    COALESCE(
+      SAFE_CAST(opportunity_Reinstituted_Funded_Date__c AS DATE),
+      SAFE.PARSE_DATE('%Y-%m-%d', SAFE_CAST(opportunity_Reinstituted_Funded_Date__c AS STRING)),
+      SAFE.PARSE_DATE('%m/%d/%Y', SAFE_CAST(opportunity_Reinstituted_Funded_Date__c AS STRING)),
+      SAFE.PARSE_DATE('%Y-%m-%d.', SAFE_CAST(opportunity_Reinstituted_Funded_Date__c AS STRING))
+    ) AS funded_d,
+    NOT REGEXP_CONTAINS(COALESCE(SAFE_CAST(lead_LeadSource AS STRING), ''), r'(?i)nps') AS ls_not_nps,
+    (SAFE_CAST(lead_IsConverted AS BOOL) IS FALSE OR LOWER(TRIM(SAFE_CAST(lead_IsConverted AS STRING))) IN ('false','f','0','no','n')) AS not_converted,
+    (SAFE_CAST(lead_Potential_Lead__c AS BOOL) IS FALSE OR LOWER(TRIM(SAFE_CAST(lead_Potential_Lead__c AS STRING))) IN ('false','f','0','no','n')) AS not_potential,
+    NOT REGEXP_CONTAINS(COALESCE(SAFE_CAST(quote_Opportunity_Account_Name__c AS STRING), ''), r'(?i)participant') AS acct_ok,
+    LOWER(TRIM(SAFE_CAST(consult_Consult_Status__c AS STRING))) AS consult_status_lc,
+    lead_Id, opportunity_Id
+  FROM `focused-sentry-464713-u0.salesforce_slo.slo_alldata_delta`
 ),
 
--- ── CRM: Leads ───────────────────────────────────────────────────────────────
+-- ── CRM: Leads (Leads + Opportunity Combo) ──────────────────────────────────
 leads AS (
-  SELECT
-    DATE_TRUNC(DATE(Lead_Create_Date), WEEK(SUNDAY)) AS week_starting,
-    COUNT(DISTINCT Lead_Unique_ID) AS leads
-  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010'
-    AND Lead_Unique_ID IS NOT NULL
-    AND Lead_Create_Date IS NOT NULL
+  SELECT DATE_TRUNC(lead_created_central_d, WEEK(SUNDAY)) AS week_starting, COUNT(DISTINCT lead_Id) AS leads
+  FROM s
+  WHERE lead_created_central_d IS NOT NULL AND ls_not_nps AND not_converted AND not_potential
   GROUP BY 1
 ),
-
--- ── CRM: Pipeline Stages ─────────────────────────────────────────────────────
-pipeline AS (
-  SELECT
-    -- QPC
-    DATE_TRUNC(QPC, WEEK(SUNDAY))                    AS week_starting_qpc,
-    COUNT(CASE WHEN QPC IS NOT NULL THEN Lead_Unique_ID END) AS qualified_potential_clients,
-    -- Consultation Scheduled
-    DATE_TRUNC(Consultation_Date, WEEK(SUNDAY))      AS week_starting_cs,
-    COUNT(CASE WHEN Consultation_Date IS NOT NULL THEN Lead_Unique_ID END) AS consultation_scheduled,
-    -- Consultation Completed
-    DATE_TRUNC(Consult_Completed_Date, WEEK(SUNDAY)) AS week_starting_cc,
-    COUNT(CASE WHEN Consult_Completed_Date IS NOT NULL THEN Lead_Unique_ID END) AS consultation_completed,
-    -- Funded
-    DATE_TRUNC(Retainer_Funded_Date, WEEK(SUNDAY))   AS week_starting_fa,
-    COUNT(CASE WHEN Retainer_Funded_Date IS NOT NULL THEN Lead_Unique_ID END) AS funded_agreements
-  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010'
-  GROUP BY 1, 3, 5, 7
-),
-
-qpc AS (
-  SELECT DATE_TRUNC(QPC, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS qualified_potential_clients
-  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010' AND QPC IS NOT NULL
+opps_for_leads AS (
+  SELECT DATE_TRUNC(opportunity_created_central_d, WEEK(SUNDAY)) AS week_starting, COUNT(DISTINCT opportunity_Id) AS opps
+  FROM s
+  WHERE opportunity_created_central_d IS NOT NULL AND acct_ok
   GROUP BY 1
 ),
+total_leads_agg AS (
+  SELECT COALESCE(l.week_starting, o.week_starting) AS week_starting, COALESCE(l.leads, 0) + COALESCE(o.opps, 0) AS leads
+  FROM leads l FULL JOIN opps_for_leads o ON l.week_starting = o.week_starting
+),
+
+-- ── CRM: QPC Waterfall Logic ────────────────────────────────────────────────
+qpc_f1 AS (
+  SELECT DATE_TRUNC(lead_created_central_d, WEEK(SUNDAY)) AS ws, COUNT(DISTINCT lead_Id) AS cnt
+  FROM s WHERE lead_created_central_d IS NOT NULL AND ls_not_nps AND not_converted AND not_potential GROUP BY 1
+),
+qpc_f2 AS (
+  SELECT DATE_TRUNC(lead_created_central_d, WEEK(SUNDAY)) AS ws, COUNT(DISTINCT lead_Id) AS cnt
+  FROM s WHERE lead_referred_out_d IS NOT NULL AND ls_not_nps AND not_converted AND not_potential GROUP BY 1
+),
+qpc_f3 AS (
+  SELECT DATE_TRUNC(opportunity_created_central_d, WEEK(SUNDAY)) AS ws, COUNT(DISTINCT opportunity_Id) AS cnt
+  FROM s WHERE opportunity_created_central_d IS NOT NULL AND acct_ok GROUP BY 1
+),
+qpc_agg AS (
+  SELECT COALESCE(f1.ws, f2.ws, f3.ws) AS week_starting, (COALESCE(f1.cnt, 0) - COALESCE(f2.cnt, 0)) + COALESCE(f3.cnt, 0) AS qpc
+  FROM qpc_f1 f1 FULL JOIN qpc_f2 f2 ON f1.ws = f2.ws FULL JOIN qpc_f3 f3 ON COALESCE(f1.ws, f2.ws) = f3.ws
+),
+
+-- ── CRM: Consultations & Encounters ─────────────────────────────────────────
 consult_sched AS (
-  SELECT DATE_TRUNC(Consultation_Date, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS consultation_scheduled
-  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010' AND Consultation_Date IS NOT NULL
-  GROUP BY 1
+  SELECT DATE_TRUNC(consult_start_central_d, WEEK(SUNDAY)) AS week_starting, COUNT(DISTINCT opportunity_Id) AS consultation_scheduled
+  FROM s WHERE consult_start_central_d IS NOT NULL AND acct_ok GROUP BY 1
 ),
+
 consult_comp AS (
-  SELECT DATE_TRUNC(Consult_Completed_Date, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS consultation_completed
-  FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010' AND Consult_Completed_Date IS NOT NULL
-  GROUP BY 1
+  SELECT DATE_TRUNC(consult_created_central_d, WEEK(SUNDAY)) AS week_starting, COUNT(DISTINCT opportunity_Id) AS consultation_completed
+  FROM s WHERE consult_created_central_d IS NOT NULL AND consult_status_lc IN ('signed in person - paid','signed in person - unpaid','consult completed','complete') GROUP BY 1
 ),
+
 funded AS (
-  SELECT DATE_TRUNC(Retainer_Funded_Date, WEEK(SUNDAY)) AS week_starting, COUNT(*) AS funded_agreements
+  SELECT DATE_TRUNC(funded_d, WEEK(SUNDAY)) AS week_starting, COUNT(DISTINCT opportunity_Id) AS funded_agreements
+  FROM s WHERE funded_d IS NOT NULL GROUP BY 1
+),
+
+-- ── Calls (Sourced safely from Universal Table) ─────────────────────────────
+calls AS (
+  SELECT DATE_TRUNC(DATE(start_datetime), WEEK(SUNDAY)) AS week_starting,
+    COUNT(DISTINCT Call_Tracking_Unique_ID) AS total_calls,
+    COUNT(DISTINCT CASE WHEN SAFE_CAST(Answered AS BOOL) THEN Call_Tracking_Unique_ID END) AS answered_calls,
+    COUNT(DISTINCT CASE WHEN SAFE_CAST(Answered AS BOOL) IS FALSE THEN Call_Tracking_Unique_ID END) AS missed_calls
   FROM `rc-datamart-report-082025.genesis_looker_crm_ctp_universal_table.genesis_crm_ctp_universal_table`
-  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010' AND Retainer_Funded_Date IS NOT NULL
+  WHERE Firm_Unique_ID = 'SterlingLawOffice-1010' AND start_datetime IS NOT NULL
   GROUP BY 1
 ),
 
--- ── Web Forms ────────────────────────────────────────────────────────────────
+-- ── Webforms ────────────────────────────────────────────────────────────────
 web_forms AS (
-  SELECT
-    DATE_TRUNC(DATE(received_at), WEEK(SUNDAY)) AS week_starting,
-    COUNT(*) AS web_form_submissions
-  FROM `rc-datamart-forms-webhook.webhook_wordpress_sterlinglawyers.wordpress_webform_contactform` -- no data
-  WHERE received_at IS NOT NULL
-  GROUP BY 1
+  SELECT DATE_TRUNC(DATE(received_at), WEEK(SUNDAY)) AS week_starting, COUNT(*) AS web_form_submissions
+  FROM `rc-datamart-forms-webhook.webhook_wordpress_sterlinglawyers.wordpress_webform_contactform`
+  WHERE received_at IS NOT NULL GROUP BY 1
 ),
 
--- ── All Weeks Spine ──────────────────────────────────────────────────────────
+-- ── Assembler Spine ──────────────────────────────────────────────────────────
 all_weeks AS (
-  SELECT week_starting FROM calls
-  UNION DISTINCT SELECT week_starting FROM leads
-  UNION DISTINCT SELECT week_starting FROM qpc
-  UNION DISTINCT SELECT week_starting FROM consult_sched
-  UNION DISTINCT SELECT week_starting FROM consult_comp
-  UNION DISTINCT SELECT week_starting FROM funded
+  SELECT week_starting FROM calls UNION DISTINCT SELECT week_starting FROM total_leads_agg
+  UNION DISTINCT SELECT week_starting FROM qpc_agg UNION DISTINCT SELECT week_starting FROM consult_sched
+  UNION DISTINCT SELECT week_starting FROM consult_comp UNION DISTINCT SELECT week_starting FROM funded
   UNION DISTINCT SELECT week_starting FROM web_forms
 )
 
-SELECT
-  '99584197-537f-4cf5-80b4-29c99205f07a'    AS client_id,
-  'Sterling Lawyers'                        AS client_name,
+-- ── Final Output ────────────────────────────────────────────────────────────
+SELECT 
+  '99584197-537f-4cf5-80b4-29c99205f07a' AS client_id, 
+  'Sterling Lawyers'                     AS client_name, 
   w.week_starting,
-  COALESCE(c.answered_calls, 0)             AS answered_calls,
-  COALESCE(c.missed_calls, 0)               AS missed_calls,
-  COALESCE(c.total_calls, 0)                AS total_calls,
-  COALESCE(wf.web_form_submissions, 0)      AS web_form_submissions,
-  COALESCE(l.leads, 0)                      AS leads,
-  COALESCE(q.qualified_potential_clients,0) AS qualified_potential_clients,
-  COALESCE(cs.consultation_scheduled, 0)    AS consultation_scheduled,
-  COALESCE(cc.consultation_completed, 0)    AS consultation_completed,
-  COALESCE(f.funded_agreements, 0)          AS funded_agreements,
-  CURRENT_TIMESTAMP()                        AS created_at,
-  CURRENT_TIMESTAMP()                        AS updated_at
+  COALESCE(c.answered_calls, 0)          AS answered_calls, 
+  COALESCE(c.missed_calls, 0)            AS missed_calls, 
+  COALESCE(c.total_calls, 0)             AS total_calls,
+  COALESCE(wf.web_form_submissions, 0)   AS web_form_submissions,
+  COALESCE(l.leads, 0)                   AS leads,
+  COALESCE(q.qpc, 0)                     AS qualified_potential_clients,
+  COALESCE(cs.consultation_scheduled, 0) AS consultation_scheduled,
+  COALESCE(cc.consultation_completed, 0) AS consultation_completed,
+  COALESCE(f.funded_agreements, 0)       AS funded_agreements,
+  CURRENT_TIMESTAMP()                    AS created_at, 
+  CURRENT_TIMESTAMP()                    AS updated_at
 FROM all_weeks w
-LEFT JOIN calls          c  ON c.week_starting  = w.week_starting
-LEFT JOIN leads          l  ON l.week_starting  = w.week_starting
-LEFT JOIN qpc            q  ON q.week_starting  = w.week_starting
-LEFT JOIN consult_sched  cs ON cs.week_starting = w.week_starting
-LEFT JOIN consult_comp   cc ON cc.week_starting = w.week_starting
-LEFT JOIN funded         f  ON f.week_starting  = w.week_starting
-LEFT JOIN web_forms      wf ON wf.week_starting = w.week_starting;
+LEFT JOIN calls c               ON c.week_starting = w.week_starting
+LEFT JOIN total_leads_agg l     ON l.week_starting = w.week_starting
+LEFT JOIN qpc_agg q             ON q.week_starting = w.week_starting
+LEFT JOIN consult_sched cs      ON cs.week_starting = w.week_starting
+LEFT JOIN consult_comp cc       ON cc.week_starting = w.week_starting
+LEFT JOIN funded f              ON f.week_starting = w.week_starting
+LEFT JOIN web_forms wf          ON wf.week_starting = w.week_starting
+WHERE w.week_starting IS NOT NULL;
