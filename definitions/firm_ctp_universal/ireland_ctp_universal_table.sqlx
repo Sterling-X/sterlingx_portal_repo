@@ -1,0 +1,2 @@
+CREATE OR REPLACE TABLE `sterlingx-insights.michael_ireland_associates.ctp_raw_data` AS
+SELECT * FROM `focused-sentry-464713-u0.calltracking_ireland.ctp_initialdata_delta`;
