@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE `sterlingx-insights.vdl.vdl_weekly_roundup_table`
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_weekly_roundup_table.vdl_weekly_roundup_table`
 PARTITION BY week_starting
 OPTIONS (require_partition_filter = false)
 AS

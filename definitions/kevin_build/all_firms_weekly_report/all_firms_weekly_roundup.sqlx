@@ -19,7 +19,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.aurit_mediation.aurit_mediation_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.aurit_mediation_weekly_roundup_table`
 
 UNION ALL
 
@@ -38,7 +38,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.scott_m_brown.scott_m_brown_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.scott_m_brown_weekly_roundup_table`
 
 UNION ALL
 
@@ -57,7 +57,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.tde.tde_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.tde_weekly_roundup_table`
 
 UNION ALL
 
@@ -76,7 +76,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.vdl.vdl_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.vdl_weekly_roundup_table`
 
 UNION ALL
 
@@ -95,7 +95,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.johnson_law_group.johnson_law_group_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.johnson_law_group_weekly_roundup_table`
 
 UNION ALL
 
@@ -114,7 +114,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.mayer_pink.meyer_pink_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.meyer_pink_weekly_roundup_table`
 
 UNION ALL
 
@@ -133,7 +133,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.kalish_and_jaggars.kalish_and_jaggars_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.kalish_and_jaggars_weekly_roundup_table`
 
 UNION ALL
 
@@ -152,7 +152,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.bruce_law.bruce_law_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.bruce_law_weekly_roundup_table`
 
 UNION ALL
 
@@ -171,7 +171,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.fanishe_family_law.fanish_family_law_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.fanish_family_law_weekly_roundup_table`
 
 UNION ALL
 
@@ -190,7 +190,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.arizona_family_law.arizona_family_law_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.arizona_family_law_weekly_roundup_table`
 
 UNION ALL
 
@@ -209,7 +209,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.cutrer.cutrer_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.cutrer_weekly_roundup_table`
 
 UNION ALL
 
@@ -228,7 +228,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.drake_law_firm.drake_law_firm_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.drake_law_firm_weekly_roundup_table`
 
 UNION ALL
 
@@ -247,7 +247,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.gjesdahl_law.gjesdahl_law_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.gjesdahl_law_weekly_roundup_table`
 
 UNION ALL
 
@@ -266,7 +266,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.haffner_law.haffner_law_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.haffner_law_weekly_roundup_table`
 
 UNION ALL
 
@@ -285,7 +285,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.lafrance.lafrance_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.lafrance_weekly_roundup_table`
 
 UNION ALL
 
@@ -304,7 +304,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.lancaster.lancaster_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.lancaster_weekly_roundup_table`
 
 UNION ALL
 
@@ -323,7 +323,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.michael_ireland_associates.ireland_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.ireland_weekly_roundup_table`
 
 UNION ALL
 
@@ -342,7 +342,7 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.sterling_lawyers.sterling_lawyers_weekly_roundup_table`
+FROM `sterlingx-insights.firm_weekly_roundup_table.sterling_lawyers_weekly_roundup_table`
 
 UNION ALL
 
@@ -361,4 +361,4 @@ SELECT
   funded_agreements,
   created_at,
   updated_at
-FROM `sterlingx-insights.the_ramage_law_group.ramage_law_weekly_roundup_table`;
+FROM `sterlingx-insights.firm_weekly_roundup_table.ramage_law_weekly_roundup_table`;

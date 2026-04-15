@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE `sterlingx-insights.gjesdahl_law.gjesdahl_law_weekly_roundup_table`
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_weekly_roundup_table.gjesdahl_law_weekly_roundup_table`
 PARTITION BY week_starting
 OPTIONS (require_partition_filter = false)
 AS

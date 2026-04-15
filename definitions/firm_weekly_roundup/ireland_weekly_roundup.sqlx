@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE `sterlingx-insights.michael_ireland_associates.ireland_weekly_roundup_table`
+CREATE OR REPLACE TABLE `sterlingx-insights.firm_weekly_roundup_table.ireland_weekly_roundup_table`
 PARTITION BY week_starting
 OPTIONS (require_partition_filter = false)
 AS
