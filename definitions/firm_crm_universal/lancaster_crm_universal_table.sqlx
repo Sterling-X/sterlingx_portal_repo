@@ -1,2 +1,2 @@
 CREATE OR REPLACE TABLE `sterlingx-insights.lancaster.crm_raw_data` AS
-SELECT * FROM `focused-sentry-464713-u0.universal_quick_crm_lancaster.quick_crm`;
+SELECT * FROM `focused-sentry-464713-u0.universal_quick_crm_lancaster.leads`;
