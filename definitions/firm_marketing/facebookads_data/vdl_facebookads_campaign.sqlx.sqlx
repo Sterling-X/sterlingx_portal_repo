@@ -1,0 +1,58 @@
+config {
+    type: "table",
+    database: "sterlingx-insights",
+    schema: "firm_marketing_facebooksads",
+    name: "vdl_facebookads_campaign",
+    tags: ["facebook ads", "ad campaign", "marketing data", "vdl"],
+    bigquery: {
+        partitionBy: "date",
+        clusterBy: ["account_id", "campaign_id", "adset_id", "ad_id"]
+    }
+}
+
+SELECT
+    `date`,
+    date_start,
+    date_stop,
+    account_id,
+    account_name,
+    campaign_id,
+    campaign_name,
+    adset_id,
+    adset_name,
+    ad_id,
+    ad_name,
+    impressions,
+    reach,
+    frequency,
+    clicks,
+    unique_clicks,
+    inline_link_clicks,
+    unique_inline_link_clicks,
+    outbound_clicks,
+    spend,
+    cpm,
+    cpc,
+    ctr,
+    purchase_actions,
+    purchase_value,
+    lead_actions,
+    lead_value,
+    add_to_cart_actions,
+    initiate_checkout_actions,
+    landing_page_view_actions,
+    link_click_actions,
+    video_p25_watched_actions,
+    video_p50_watched_actions,
+    video_p75_watched_actions,
+    video_p95_watched_actions,
+    video_p100_watched_actions,
+    video_play_actions,
+    thruplay_actions,
+
+    COALESCE((
+        SELECT SAFE_CAST(JSON_VALUE(x, '$.value') AS INT64)
+        FROM UNNEST(JSON_QUERY_ARRAY(actions_json, '$')) AS x
+        WHERE JSON_VALUE(x, '$.action_type') = 'offsite_conversion.fb_pixel_custom'
+    ), 0) AS offsite_conversion_fb_pixel_custom_actions
+FROM `rc-datamart-adminreport.facebook_ads_vdl.fct_fb_ad_insights_daily`

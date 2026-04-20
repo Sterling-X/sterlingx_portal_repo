@@ -1,0 +1,45 @@
+config {
+    type: "table",
+    database: "sterlingx-insights",
+    schema: "firm_marketing_pagespeedinsights",
+    name: "vdl_pagespeedinsights_performance",
+    tags: ["pagespeed insights", "run performance", "marketing data", "vdl"],
+    bigquery: {
+        partitionBy: "analysis_date",
+        clusterBy: ["normalized_url", "strategy"]
+    }
+}
+
+SELECT
+    fp.analysis_date,
+    du.normalized_url,
+    ds.strategy,
+    fp.requested_url,
+    fp.final_url,
+    fp.locale,
+    fp.environment_benchmark_index,
+    fp.lighthouse_version,
+    fp.user_agent,
+    fp.analysis_utc_timestamp,
+    fp.fetch_time,
+    fp.performance_score,
+    fp.accessibility_score,
+    fp.best_practices_score,
+    fp.seo_score,
+    fp.largest_contentful_paint_ms,
+    fp.first_contentful_paint_ms,
+    fp.speed_index_ms,
+    fp.interactive_ms,
+    fp.total_blocking_time_ms,
+    fp.cumulative_layout_shift,
+    fp.server_response_time_ms,
+    fp.network_user_agent,
+    fp.host_user_agent,
+    fp.runtime_error_code,
+    fp.runtime_error_message,
+    fp.run_warnings_json
+FROM `rc-datamart-adminreport.pagespeed_insights_vdl.fct_psi_pagespeed_run` fp
+LEFT JOIN `rc-datamart-adminreport.pagespeed_insights_vdl.dim_psi_url` du
+    ON fp.url_key = du.url_key
+LEFT JOIN `rc-datamart-adminreport.pagespeed_insights_vdl.dim_psi_strategy` ds
+    ON fp.strategy_key = ds.strategy_key

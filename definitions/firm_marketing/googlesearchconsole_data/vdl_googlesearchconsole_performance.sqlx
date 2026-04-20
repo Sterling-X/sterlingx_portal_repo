@@ -1,0 +1,25 @@
+config {
+    type: "table",
+    database: "sterlingx-insights",
+    schema: "firm_marketing_googlesearchconsole",
+    name: "vdl_googlesearchconsole_performance",
+    tags: ["google search console", "search performance", "marketing data", "vdl"],
+    bigquery: {
+        partitionBy: "date",
+        clusterBy: ["site_url", "search_type", "country", "device"]
+    }
+}
+
+SELECT
+    data_date AS `date`,
+    site_url,
+    `page`,
+    `query`,
+    country,
+    device,
+    search_type,
+    clicks,
+    impressions,
+    ctr,
+    position
+FROM `rc-datamart-adminreport.google_search_console_vdl.fct_gsc_search_performance`

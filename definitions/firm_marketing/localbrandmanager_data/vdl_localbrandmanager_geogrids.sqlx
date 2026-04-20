@@ -1,0 +1,21 @@
+config {
+    type: "table",
+    database: "sterlingx-insights",
+    schema: "firm_marketing_localbrandmanager",
+    name: "vdl_localbrandmanager_geogrids",
+    tags: ["localbrandmanager", "creative", "marketing data", "vdl"],
+    bigquery: {
+        partitionBy: "created_date",
+        clusterBy: ["business_place_id", "gbp_id", "geogrid_config_id", "location_id"]
+    }
+}
+
+SELECT
+    CAST(created_at AS DATE) AS created_date,
+    *
+FROM `rc-datamart-adminreport.local_brand_manager.stg_lbm_geogrids`
+WHERE location_id IN (
+    'nl12x425',
+    '3zy21y4l',
+    'qzkvwge5'
+)

@@ -1,0 +1,52 @@
+config {
+    type: "table",
+    database: "sterlingx-insights",
+    schema: "firm_marketing_googleads",
+    name: "vdl_googleads_campaign",
+    tags: ["google ads", "campaign", "marketing data", "vdl"],
+    bigquery: {
+        partitionBy: "segment_date",
+        clusterBy: ["customer_id", "campaign_id"]
+    }
+}
+
+SELECT
+    fc.segment_date,
+    fc.customer_id,
+    dc.customer_name,
+    fc.campaign_id,
+    dp.campaign_name,
+    fc.device,
+    fc.ad_network_type,
+    fc.impressions,
+    fc.clicks,
+    (fc.cost_micros / 1000000.0) AS spend_cost,
+    fc.interactions,
+    fc.ctr,
+    (fc.average_cpc / 1000000.0) AS average_cpc,
+    (fc.average_cpm / 1000000.0) AS average_cpm,
+    (fc.average_cost / 1000000.0) AS average_cost,
+    fc.conversions,
+    fc.conversions_value,
+    fc.all_conversions,
+    fc.all_conversions_value,
+    fc.view_through_conversions,
+    (fc.cost_per_conversion / 1000000.0) AS cost_per_conversion,
+    fc.value_per_conversion,
+    fc.search_impression_share,
+    fc.search_budget_lost_impression_share,
+    fc.search_rank_lost_impression_share,
+    fc.absolute_top_impression_percentage,
+    fc.top_impression_percentage,
+    fc.engagements,
+    fc.engagement_rate,
+    fc.video_trueview_views,
+    fc.video_quartile_p25_rate,
+    fc.video_quartile_p50_rate,
+    fc.video_quartile_p75_rate,
+    fc.video_quartile_p100_rate
+FROM `rc-datamart-adminreport.google_ads_vdl_v2.fct_gads_campaign_daily` fc
+LEFT JOIN `rc-datamart-adminreport.google_ads_vdl_v2.dim_gads_customer` dc
+    ON fc.customer_id = dc.customer_id
+LEFT JOIN `rc-datamart-adminreport.google_ads_vdl_v2.dim_gads_campaign` dp
+    ON fc.campaign_id = dp.campaign_id

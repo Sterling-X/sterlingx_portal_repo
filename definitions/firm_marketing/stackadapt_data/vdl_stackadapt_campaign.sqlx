@@ -1,0 +1,19 @@
+config {
+    type: "table",
+    database: "sterlingx-insights",
+    schema: "firm_marketing_stackadapt",
+    name: "vdl_stackadapt_campaign",
+    tags: ["stackadapt", "campaign", "marketing data", "vdl"],
+    bigquery: {
+        partitionBy: "event_date",
+        clusterBy: ["campaign_id", "advertiser_id", "line_item_id"]
+    }
+}
+
+SELECT *
+    EXCEPT(
+        fact_key,
+        created_at,
+        updated_at
+    )
+FROM `rc-datamart-adminreport.stackadapt_vdl.fct_sadapt_campaign_daily`
