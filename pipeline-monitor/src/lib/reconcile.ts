@@ -4,9 +4,7 @@ import {
   GADS_TARGETS,
   type GadsTarget,
 } from "@/lib/accounts";
-import { bigquery, tableExists } from "@/lib/bigquery";
-
-const REPORT_PROJECT = "rc-datamart-report-082025";
+import { REPORT_PROJECT, bigquery, tableExists } from "@/lib/bigquery";
 
 export type Verdict = "green" | "yellow" | "red";
 
@@ -72,7 +70,7 @@ async function checkCountAndFreshness(
   stageLabel: string,
 ): Promise<StageResult> {
   const tableRef = `${REPORT_PROJECT}.${dataset}.${table}`;
-  const exists = await tableExists(dataset, table);
+  const exists = await tableExists(REPORT_PROJECT, dataset, table);
   if (!exists) {
     return {
       stage: stageLabel,

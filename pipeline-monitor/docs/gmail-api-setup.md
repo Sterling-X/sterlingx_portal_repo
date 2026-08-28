@@ -11,10 +11,9 @@ consent once.
 
 Gmail API is enabled in project **`sterlingx-insights`** (project number
 `315627031`), and `GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` already exist
-there as Secret Manager secrets. (`deploy-commands.md` has the
-cross-project `--set-secrets`/IAM-grant details for referencing these from
-the Cloud Run service, which lives in a different project,
-`rc-datamart-report-082025`.)
+there as Secret Manager secrets. The Cloud Run service also deploys into
+`sterlingx-insights` (see `docs/deploy-commands.md`) — same project as
+these secrets, so no cross-project grants are needed for them.
 
 If the OAuth consent screen for this client hasn't had `det@rocketclicks.com`
 added as a test user yet (only needed if the app is in Testing mode),
@@ -27,7 +26,7 @@ Sending mailbox: **`det@rocketclicks.com`** (`GMAIL_SENDER_ADDRESS`).
 
 First, install the one-off local dependency this script needs:
 
-```bash
+```powershell
 pip install google-auth-oauthlib
 ```
 
@@ -37,8 +36,8 @@ values from the `GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` secrets already
 created in `sterlingx-insights` (Secret Manager → the secret → "Access
 latest version"; don't paste these into any committed file):
 
-```bash
-python3 -c "
+```powershell
+python -c "
 from google_auth_oauthlib.flow import InstalledAppFlow
 flow = InstalledAppFlow.from_client_config(
     {
@@ -63,15 +62,16 @@ becomes `GMAIL_REFRESH_TOKEN`.
 
 ## 3. Set the env vars — done
 
-All three secrets now exist in Secret Manager under `sterlingx-insights`
-(project `315627031`):
+All three secrets exist in Secret Manager under `sterlingx-insights`
+(project `315627031`) — the same project the Cloud Run service deploys
+into, so plain short names resolve fine, no full resource path needed:
 
-- `projects/315627031/secrets/GMAIL_CLIENT_ID`
-- `projects/315627031/secrets/GMAIL_CLIENT_SECRET`
-- `projects/315627031/secrets/GMAIL_REFRESH_TOKEN`
+- `GMAIL_CLIENT_ID`
+- `GMAIL_CLIENT_SECRET`
+- `GMAIL_REFRESH_TOKEN`
 
 `GMAIL_SENDER_ADDRESS=det@rocketclicks.com` is set as a plain env var
 (not a secret — just an email address, nothing sensitive). See
-`docs/deploy-commands.md` step 2 (cross-project `secretAccessor` grants)
-and step 3 (the actual `gcloud run deploy` command with all of this wired
-in) for the exact commands.
+`docs/deploy-commands.md` step 2 (`secretAccessor` grants) and step 3
+(the actual `gcloud run deploy` command with all of this wired in) for
+the exact commands.

@@ -1,8 +1,7 @@
 import { ACTIVE_FIRMS, type FirmConfig, PAUSED_FIRMS } from "@/lib/accounts";
-import { bigquery, tableExists } from "@/lib/bigquery";
+import { APP_PROJECT, bigquery, tableExists } from "@/lib/bigquery";
 
-const TABLE =
-  "`rc-datamart-report-082025.pipeline_monitoring.dashboard_firm_config`";
+const TABLE = `\`${APP_PROJECT}.pipeline_monitoring.dashboard_firm_config\``;
 
 export interface EffectiveFirmConfig {
   active: FirmConfig[];
@@ -16,6 +15,7 @@ export interface EffectiveFirmConfig {
 // source of truth.
 export async function getEffectiveFirmConfig(): Promise<EffectiveFirmConfig> {
   const exists = await tableExists(
+    APP_PROJECT,
     "pipeline_monitoring",
     "dashboard_firm_config",
   );

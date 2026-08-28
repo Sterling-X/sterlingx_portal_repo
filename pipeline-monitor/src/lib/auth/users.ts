@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { bigquery } from "@/lib/bigquery";
+import { APP_PROJECT, bigquery } from "@/lib/bigquery";
 
 export type Role = "admin" | "developer" | "user";
 
@@ -15,7 +15,7 @@ export interface DashboardUser {
   resetTokenExpiresAt: string | null;
 }
 
-const TABLE = "`rc-datamart-report-082025.pipeline_monitoring.dashboard_users`";
+const TABLE = `\`${APP_PROJECT}.pipeline_monitoring.dashboard_users\``;
 
 // All writes use parameterized DML (not the streaming insert API) so a
 // freshly created/edited row is immediately UPDATE-able -- BigQuery

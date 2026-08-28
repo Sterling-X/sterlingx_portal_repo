@@ -1,8 +1,7 @@
-import { bigquery } from "@/lib/bigquery";
+import { APP_PROJECT, bigquery } from "@/lib/bigquery";
 import type { FirmCheckupResult } from "@/lib/reconcile";
 
-const SNAPSHOT_TABLE =
-  "rc-datamart-report-082025.pipeline_monitoring.offline_conversion_health_status";
+const SNAPSHOT_TABLE = `${APP_PROJECT}.pipeline_monitoring.offline_conversion_health_status`;
 
 // Writes one row per firm per checkup run. Table must already exist — see
 // sql/offline_conversion_health_status.sql (PENDING HUMAN REVIEW, not yet

@@ -12,7 +12,7 @@ directly, then use the app normally from there.
 
 ## 2. Generate a bcrypt hash for the admin's password
 
-```bash
+```powershell
 node -e "
 const bcrypt = require('bcryptjs');
 const password = process.argv[1];
@@ -29,7 +29,7 @@ resolves. Copy the printed hash — you'll paste it into the query below.
 Run in BigQuery Studio (or `bq query --use_legacy_sql=false`):
 
 ```sql
-INSERT INTO `rc-datamart-report-082025.pipeline_monitoring.dashboard_users`
+INSERT INTO `sterlingx-insights.pipeline_monitoring.dashboard_users`
   (user_id, name, email, password_hash, role, assigned_firms,
    is_active, reset_token_hash, reset_token_expires_at,
    created_at, updated_at)
