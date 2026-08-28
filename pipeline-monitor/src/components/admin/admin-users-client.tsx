@@ -1,6 +1,6 @@
 "use client";
 
-import { ACTIVE_FIRMS } from "@/lib/accounts";
+import type { FirmConfig } from "@/lib/accounts";
 import type { AppRole } from "@/lib/auth";
 import { useCallback, useEffect, useState } from "react";
 
@@ -19,7 +19,17 @@ interface UserRow {
 // Application) or are invited directly from the Auth0 Dashboard. Once an
 // account exists, an admin assigns it a role here, and (for `user`-role
 // accounts) which firms it can see.
-export function AdminUsersClient() {
+//
+// Assigned-firm restriction currently only scopes Offline Conversion --
+// Waterfall Report has no firms (singleton), and Pacing Report's `user`
+// role isn't wired to this same assignedFirms list yet (a pipeline-aware
+// assignment model is follow-up work, not part of this pass). Firms come
+// in as a plain-data prop from the server component, not imported here --
+// importing a PipelineDefinition into a client component would pull the
+// Node-only @google-cloud/bigquery client into the browser bundle.
+export function AdminUsersClient({
+  assignableFirms,
+}: { assignableFirms: FirmConfig[] }) {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +111,7 @@ export function AdminUsersClient() {
                 <td className="px-4 py-3 text-white/60">
                   {u.role === "user" ? (
                     <div className="flex flex-wrap gap-2">
-                      {ACTIVE_FIRMS.map((f) => (
+                      {assignableFirms.map((f) => (
                         <label
                           key={f.slug}
                           className="flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1 text-xs"

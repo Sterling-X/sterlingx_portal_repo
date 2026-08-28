@@ -1,4 +1,4 @@
-import type { Verdict } from "@/lib/reconcile";
+import type { Verdict } from "@/lib/pipelines";
 
 const STYLES: Record<Verdict, string> = {
   green: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",

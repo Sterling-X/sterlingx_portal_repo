@@ -5,7 +5,7 @@ All commands use PowerShell and the active `gcloud` account
 
 **Project split:** the app's own hosting/state — Cloud Run service, service
 account, and the `pipeline_monitoring` dataset (`dashboard_firm_config`,
-`offline_conversion_health_status`) — all live in **`sterlingx-insights`**
+`pipeline_health_status`) — all live in **`sterlingx-insights`**
 (project number `315627031`), region `us-central1`. The actual pipeline
 data this app *reads* (`firms_origin_lead_table`, conversion events, GAds
 export logs, validation tables) stays where it's always been, in
@@ -44,7 +44,7 @@ BigQuery Studio instead: select `rc-datamart-report-082025` →
 ## 1. Create the BigQuery infra (dataset + tables) — in sterlingx-insights
 
 ```powershell
-bq query --use_legacy_sql=false < pipeline-monitor/sql/offline_conversion_health_status.sql
+bq query --use_legacy_sql=false < pipeline-monitor/sql/pipeline_health_status.sql
 bq query --use_legacy_sql=false < pipeline-monitor/sql/dashboard_firm_config.sql
 ```
 
@@ -53,7 +53,7 @@ Studio → project `sterlingx-insights` → new query, and run it there
 instead. Both are idempotent — `CREATE SCHEMA IF NOT EXISTS` /
 `CREATE TABLE IF NOT EXISTS` — safe to run once, safe to re-run.)
 
-Verify: `pipeline_monitoring.offline_conversion_health_status` should exist
+Verify: `pipeline_monitoring.pipeline_health_status` should exist
 under `sterlingx-insights` with 0 rows.
 
 ## 2. Create the dedicated service account (least privilege) — in sterlingx-insights
@@ -228,9 +228,18 @@ curl.exe -X POST "<DEPLOYED_URL>/api/offline-conversion-checkup" `
 
 Should return JSON with a per-firm verdict for the 10 active firms, and
 write one snapshot row per firm into
-`pipeline_monitoring.offline_conversion_health_status`. Confirm with:
+`pipeline_monitoring.pipeline_health_status`. Confirm with:
 
 ```powershell
 bq query --use_legacy_sql=false `
-  'SELECT firm, verdict, checked_at FROM `sterlingx-insights.pipeline_monitoring.offline_conversion_health_status` ORDER BY checked_at DESC LIMIT 15'
+  'SELECT pipeline_key, firm, verdict, checked_at FROM `sterlingx-insights.pipeline_monitoring.pipeline_health_status` ORDER BY checked_at DESC LIMIT 15'
 ```
+
+This smoke test targets `/api/offline-conversion-checkup` (an alias for
+`/api/checkup/offline_conversion` — see that route file), which is still
+the one wired to the Cloud Scheduler job in step 4. Waterfall Report and
+Pacing Report use `/api/checkup/waterfall_report` and
+`/api/checkup/pacing_report` respectively — same auth shape, not yet
+wired to their own scheduler jobs (only Offline Conversion's daily job
+was set up this session; register the other two the same way once
+they're ready to run unattended).

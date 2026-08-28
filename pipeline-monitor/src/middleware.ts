@@ -13,5 +13,5 @@ export default withMiddlewareAuthRequired();
 // callers -- it accepts a session OR the CHECKUP_CRON_SECRET header, see
 // that route for why.
 export const config = {
-  matcher: ["/", "/admin/:path*"],
+  matcher: ["/", "/admin/:path*", "/diagnostics/:path*"],
 };
