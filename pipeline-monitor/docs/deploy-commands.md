@@ -3,17 +3,16 @@
 All commands use the active `gcloud` account (`kmogatas@rocketclicks.com`).
 Project: `rc-datamart-report-082025`, region: `us-central1`.
 
-**Cross-project note:** `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET` live as
-Secret Manager secrets in a *different* project — `sterlingx-insights`
-(project number `315627031`) — not `rc-datamart-report-082025`. Gmail API
-was enabled there specifically. This means two things later in this doc:
-the Cloud Run service account needs `roles/secretmanager.secretAccessor`
-granted **in `sterlingx-insights`**, not just its home project, and the
-`--set-secrets` flag must reference those two by full resource path
-(`projects/315627031/secrets/<name>:latest`), not by short name. `GMAIL_REFRESH_TOKEN`
-and `GMAIL_SENDER_ADDRESS` aren't created yet (see `docs/gmail-api-setup.md`
-step 2) — decide then whether to put them in `sterlingx-insights` too for
-consistency, or alongside the other secrets in `rc-datamart-report-082025`.
+**Cross-project note:** `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and
+`GMAIL_REFRESH_TOKEN` all live as Secret Manager secrets in a *different*
+project — `sterlingx-insights` (project number `315627031`) — not
+`rc-datamart-report-082025`. Gmail API was enabled there specifically. This
+means two things later in this doc: the Cloud Run service account needs
+`roles/secretmanager.secretAccessor` granted **in `sterlingx-insights`**,
+not just its home project, and the `--set-secrets` flag must reference all
+three by full resource path (`projects/315627031/secrets/<name>:latest`),
+not by short name. `GMAIL_SENDER_ADDRESS` (`det@rocketclicks.com`) isn't
+sensitive — it's a plain `--set-env-vars` entry, not a secret.
 
 ## 1. Create the BigQuery infra (dataset + tables)
 
@@ -97,25 +96,22 @@ gcloud secrets add-iam-policy-binding checkup-cron-secret \
   --role="roles/secretmanager.secretAccessor"
 ```
 
-For `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET`, which live in
-**`sterlingx-insights`** (project number `315627031`) — cross-project grant,
-`--project` here is the secret's project, not the service's:
+For `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN`,
+which all live in **`sterlingx-insights`** (project number `315627031`) —
+cross-project grant, `--project` here is the secret's project, not the
+service's:
 
 ```bash
-gcloud secrets add-iam-policy-binding GMAIL_CLIENT_ID \
-  --project=sterlingx-insights \
-  --member="serviceAccount:${SA_EMAIL}" \
-  --role="roles/secretmanager.secretAccessor"
-
-gcloud secrets add-iam-policy-binding GMAIL_CLIENT_SECRET \
-  --project=sterlingx-insights \
-  --member="serviceAccount:${SA_EMAIL}" \
-  --role="roles/secretmanager.secretAccessor"
+for secret in GMAIL_CLIENT_ID GMAIL_CLIENT_SECRET GMAIL_REFRESH_TOKEN; do
+  gcloud secrets add-iam-policy-binding "$secret" \
+    --project=sterlingx-insights \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/secretmanager.secretAccessor"
+done
 ```
 
-Grant the same for `GMAIL_REFRESH_TOKEN` and `GMAIL_SENDER_ADDRESS` once
-those secrets exist (step 2 of `docs/gmail-api-setup.md`), against whichever
-project you end up creating them in.
+`GMAIL_SENDER_ADDRESS` (`det@rocketclicks.com`) isn't a secret — no grant
+needed, it's set as a plain env var in step 3 below.
 
 ## 3. Deploy to Cloud Run (private — no public access)
 
@@ -127,18 +123,16 @@ gcloud run deploy rc-projects-systems-monitoring-dashboard \
   --service-account="${SA_EMAIL}" \
   --no-allow-unauthenticated \
   --port=8080 \
-  --set-env-vars="NEXTAUTH_URL=<fill in after first deploy, see note below>" \
-  --set-secrets="NEXTAUTH_SECRET=nextauth-secret:latest,CHECKUP_CRON_SECRET=checkup-cron-secret:latest,GMAIL_CLIENT_ID=projects/315627031/secrets/GMAIL_CLIENT_ID:latest,GMAIL_CLIENT_SECRET=projects/315627031/secrets/GMAIL_CLIENT_SECRET:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest,GMAIL_SENDER_ADDRESS=gmail-sender-address:latest"
+  --set-env-vars="NEXTAUTH_URL=<fill in after first deploy, see note below>,GMAIL_SENDER_ADDRESS=det@rocketclicks.com" \
+  --set-secrets="NEXTAUTH_SECRET=nextauth-secret:latest,CHECKUP_CRON_SECRET=checkup-cron-secret:latest,GMAIL_CLIENT_ID=projects/315627031/secrets/GMAIL_CLIENT_ID:latest,GMAIL_CLIENT_SECRET=projects/315627031/secrets/GMAIL_CLIENT_SECRET:latest,GMAIL_REFRESH_TOKEN=projects/315627031/secrets/GMAIL_REFRESH_TOKEN:latest"
 ```
 
-`GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` use the full
-`projects/315627031/secrets/<name>:latest` form because they live in
-`sterlingx-insights`, a different project than this Cloud Run service —
-`--set-secrets` needs the full resource path to reach across projects, a
-bare short name only resolves within the deploying project.
-`GMAIL_REFRESH_TOKEN`/`GMAIL_SENDER_ADDRESS` above assume you create those
-in `rc-datamart-report-082025` (short name works); switch to the same full-path
-form if you put them in `sterlingx-insights` instead for consistency.
+The three `GMAIL_*` secrets use the full `projects/315627031/secrets/<name>:latest`
+form because they live in `sterlingx-insights`, a different project than
+this Cloud Run service — `--set-secrets` needs the full resource path to
+reach across projects, a bare short name only resolves within the
+deploying project. `GMAIL_SENDER_ADDRESS` is a plain env var, not a secret
+— it's just an email address, nothing sensitive to protect.
 
 The app now has a real login (NextAuth + the `dashboard_users` table — see
 `docs/first-admin-setup.md` and `docs/gmail-api-setup.md`), but

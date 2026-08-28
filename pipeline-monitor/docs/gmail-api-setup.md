@@ -61,19 +61,17 @@ sign in as the sending mailbox, and approve the `gmail.send` scope only —
 minimum necessary, not full mailbox access. The printed refresh token
 becomes `GMAIL_REFRESH_TOKEN`.
 
-## 3. Set the env vars
+## 3. Set the env vars — done
 
-On Cloud Run (see `docs/deploy-commands.md` step 3), or locally in
-`.env.local` for dev:
+All three secrets now exist in Secret Manager under `sterlingx-insights`
+(project `315627031`):
 
-```
-GMAIL_CLIENT_ID=<from step 1>
-GMAIL_CLIENT_SECRET=<from step 1>
-GMAIL_REFRESH_TOKEN=<from step 2>
-GMAIL_SENDER_ADDRESS=<the mailbox you authorized in step 2>
-```
+- `projects/315627031/secrets/GMAIL_CLIENT_ID`
+- `projects/315627031/secrets/GMAIL_CLIENT_SECRET`
+- `projects/315627031/secrets/GMAIL_REFRESH_TOKEN`
 
-Treat all four as secrets — prefer Secret Manager + `--set-secrets` on the
-`gcloud run deploy` command over plain `--set-env-vars`, matching how
-`PIPELINE_HEALTH_CHECK_SECRET` etc. are handled in the AI-Projects
-`client-data-validator` project.
+`GMAIL_SENDER_ADDRESS=det@rocketclicks.com` is set as a plain env var
+(not a secret — just an email address, nothing sensitive). See
+`docs/deploy-commands.md` step 2 (cross-project `secretAccessor` grants)
+and step 3 (the actual `gcloud run deploy` command with all of this wired
+in) for the exact commands.
