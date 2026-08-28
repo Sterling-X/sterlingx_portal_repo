@@ -3,6 +3,18 @@
 All commands use the active `gcloud` account (`kmogatas@rocketclicks.com`).
 Project: `rc-datamart-report-082025`, region: `us-central1`.
 
+**Cross-project note:** `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET` live as
+Secret Manager secrets in a *different* project — `sterlingx-insights`
+(project number `315627031`) — not `rc-datamart-report-082025`. Gmail API
+was enabled there specifically. This means two things later in this doc:
+the Cloud Run service account needs `roles/secretmanager.secretAccessor`
+granted **in `sterlingx-insights`**, not just its home project, and the
+`--set-secrets` flag must reference those two by full resource path
+(`projects/315627031/secrets/<name>:latest`), not by short name. `GMAIL_REFRESH_TOKEN`
+and `GMAIL_SENDER_ADDRESS` aren't created yet (see `docs/gmail-api-setup.md`
+step 2) — decide then whether to put them in `sterlingx-insights` too for
+consistency, or alongside the other secrets in `rc-datamart-report-082025`.
+
 ## 1. Create the BigQuery infra (dataset + tables)
 
 Three DDL files now, all writing into the same `pipeline_monitoring`
@@ -68,6 +80,43 @@ project level — that would give this dashboard read access to every
 dataset in the project, including client-sensitive data unrelated to
 offline conversion.
 
+### Grant Secret Manager access (two different projects)
+
+For `NEXTAUTH_SECRET` and `CHECKUP_CRON_SECRET` (created in
+`rc-datamart-report-082025`, see step 3 below):
+
+```bash
+gcloud secrets add-iam-policy-binding nextauth-secret \
+  --project=rc-datamart-report-082025 \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/secretmanager.secretAccessor"
+
+gcloud secrets add-iam-policy-binding checkup-cron-secret \
+  --project=rc-datamart-report-082025 \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+For `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET`, which live in
+**`sterlingx-insights`** (project number `315627031`) — cross-project grant,
+`--project` here is the secret's project, not the service's:
+
+```bash
+gcloud secrets add-iam-policy-binding GMAIL_CLIENT_ID \
+  --project=sterlingx-insights \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/secretmanager.secretAccessor"
+
+gcloud secrets add-iam-policy-binding GMAIL_CLIENT_SECRET \
+  --project=sterlingx-insights \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+Grant the same for `GMAIL_REFRESH_TOKEN` and `GMAIL_SENDER_ADDRESS` once
+those secrets exist (step 2 of `docs/gmail-api-setup.md`), against whichever
+project you end up creating them in.
+
 ## 3. Deploy to Cloud Run (private — no public access)
 
 ```bash
@@ -79,8 +128,17 @@ gcloud run deploy rc-projects-systems-monitoring-dashboard \
   --no-allow-unauthenticated \
   --port=8080 \
   --set-env-vars="NEXTAUTH_URL=<fill in after first deploy, see note below>" \
-  --set-secrets="NEXTAUTH_SECRET=nextauth-secret:latest,CHECKUP_CRON_SECRET=checkup-cron-secret:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest,GMAIL_SENDER_ADDRESS=gmail-sender-address:latest"
+  --set-secrets="NEXTAUTH_SECRET=nextauth-secret:latest,CHECKUP_CRON_SECRET=checkup-cron-secret:latest,GMAIL_CLIENT_ID=projects/315627031/secrets/GMAIL_CLIENT_ID:latest,GMAIL_CLIENT_SECRET=projects/315627031/secrets/GMAIL_CLIENT_SECRET:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest,GMAIL_SENDER_ADDRESS=gmail-sender-address:latest"
 ```
+
+`GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` use the full
+`projects/315627031/secrets/<name>:latest` form because they live in
+`sterlingx-insights`, a different project than this Cloud Run service —
+`--set-secrets` needs the full resource path to reach across projects, a
+bare short name only resolves within the deploying project.
+`GMAIL_REFRESH_TOKEN`/`GMAIL_SENDER_ADDRESS` above assume you create those
+in `rc-datamart-report-082025` (short name works); switch to the same full-path
+form if you put them in `sterlingx-insights` instead for consistency.
 
 The app now has a real login (NextAuth + the `dashboard_users` table — see
 `docs/first-admin-setup.md` and `docs/gmail-api-setup.md`), but

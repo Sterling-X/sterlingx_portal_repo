@@ -7,26 +7,35 @@ domain-wide delegation, which would need a Workspace admin to enable
 delegation org-wide. This only needs that one mailbox's owner to grant
 consent once.
 
-## 1. Create OAuth client credentials
+## 1. Create OAuth client credentials — done
 
-In the Google Cloud Console, project `rc-datamart-report-082025` (or
-whichever project you want to own these credentials):
+Gmail API is enabled in project **`sterlingx-insights`** (project number
+`315627031`), and `GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` already exist
+there as Secret Manager secrets. (`deploy-commands.md` has the
+cross-project `--set-secrets`/IAM-grant details for referencing these from
+the Cloud Run service, which lives in a different project,
+`rc-datamart-report-082025`.)
 
-1. APIs & Services → Enabled APIs → enable **Gmail API**.
-2. APIs & Services → Credentials → Create Credentials → OAuth client ID.
-   - Application type: **Desktop app** (simplest for a one-time manual
-     consent flow — you don't need a web redirect URI for this).
-   - Note the generated **Client ID** and **Client Secret** — these become
-     `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET`.
-3. OAuth consent screen: add the sending mailbox's address as a test user
-   if the app is in Testing mode (fine for internal use — no need to
-   publish/verify the app for a single internal mailbox).
+If the OAuth consent screen for this client hasn't had `det@rocketclicks.com`
+added as a test user yet (only needed if the app is in Testing mode),
+do that now in Google Cloud Console → `sterlingx-insights` → APIs &
+Services → OAuth consent screen, before running step 2 below.
 
 ## 2. Get a refresh token for the sending mailbox
 
-Sign in to the mailbox you want emails to come from (e.g. via
-`GMAIL_SENDER_ADDRESS`), then run this once from a machine with a browser
-available, using the client ID/secret from step 1:
+Sending mailbox: **`det@rocketclicks.com`** (`GMAIL_SENDER_ADDRESS`).
+
+First, install the one-off local dependency this script needs:
+
+```bash
+pip install google-auth-oauthlib
+```
+
+Then, signed in as `det@rocketclicks.com` in your default browser, run this
+once — replace `<GMAIL_CLIENT_ID>`/`<GMAIL_CLIENT_SECRET>` with the actual
+values from the `GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` secrets already
+created in `sterlingx-insights` (Secret Manager → the secret → "Access
+latest version"; don't paste these into any committed file):
 
 ```bash
 python3 -c "
@@ -47,8 +56,7 @@ print('Refresh token:', creds.refresh_token)
 "
 ```
 
-(Requires `pip install google-auth-oauthlib` — a one-off local dependency,
-not something the app needs at runtime.) This opens a browser, asks you to
+This opens a browser, asks you to
 sign in as the sending mailbox, and approve the `gmail.send` scope only —
 minimum necessary, not full mailbox access. The printed refresh token
 becomes `GMAIL_REFRESH_TOKEN`.
