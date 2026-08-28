@@ -3,13 +3,20 @@
 All commands use the active `gcloud` account (`kmogatas@rocketclicks.com`).
 Project: `rc-datamart-report-082025`, region: `us-central1`.
 
-## 1. Create the BigQuery infra (dataset + snapshot table)
+## 1. Create the BigQuery infra (dataset + tables)
 
-The DDL is already written and reviewed: `pipeline-monitor/sql/offline_conversion_health_status.sql`.
+Three DDL files now, all writing into the same `pipeline_monitoring`
+dataset — run all three:
 
 ```bash
 bq query --use_legacy_sql=false < pipeline-monitor/sql/offline_conversion_health_status.sql
+bq query --use_legacy_sql=false < pipeline-monitor/sql/dashboard_users.sql
+bq query --use_legacy_sql=false < pipeline-monitor/sql/dashboard_firm_config.sql
 ```
+
+After `dashboard_users.sql` runs, follow `docs/first-admin-setup.md` to
+create the first admin account — nothing in `/admin/*` is reachable until
+that exists.
 
 If your local `bq` CLI is broken (it is, in this environment — a Python
 `absl.flags` import error), run it from the BigQuery Studio console instead:
@@ -50,6 +57,10 @@ listed role:
 | `rc-datamart-report-082025.gads_validation_table` | BigQuery Data Viewer |
 | `rc-datamart-report-082025.pipeline_monitoring` | BigQuery Data Editor |
 
+(This dataset now also holds `dashboard_users` and `dashboard_firm_config`
+— the same Data Editor grant on the whole dataset already covers them, no
+extra grant needed.)
+
 (Or via `bq` CLI if yours works: `bq add-iam-policy-binding --member="serviceAccount:${SA_EMAIL}" --role="roles/bigquery.dataViewer" rc-datamart-report-082025:firms_origin_lead_table`, one per dataset.)
 
 Do **not** grant `roles/bigquery.dataViewer` or `roles/editor` at the
@@ -66,22 +77,38 @@ gcloud run deploy rc-projects-systems-monitoring-dashboard \
   --region=us-central1 \
   --service-account="${SA_EMAIL}" \
   --no-allow-unauthenticated \
-  --port=8080
+  --port=8080 \
+  --set-env-vars="NEXTAUTH_URL=<fill in after first deploy, see note below>" \
+  --set-secrets="NEXTAUTH_SECRET=nextauth-secret:latest,CHECKUP_CRON_SECRET=checkup-cron-secret:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest,GMAIL_SENDER_ADDRESS=gmail-sender-address:latest"
 ```
 
-This app has **no auth layer built in** (no Clerk/Auth0/Identity Platform —
-confirmed, not an oversight in this doc). `--no-allow-unauthenticated` is
-required, not optional: without it, anyone with the URL could see internal
-pipeline health data for every tracked firm. Access it yourself via:
+The app now has a real login (NextAuth + the `dashboard_users` table — see
+`docs/first-admin-setup.md` and `docs/gmail-api-setup.md`), but
+`--no-allow-unauthenticated` should stay anyway: Cloud Run IAM plus
+app-level login is defense in depth, not redundant — losing the Cloud Run
+layer would still expose `/api/offline-conversion-checkup` to anyone with
+the URL who also had `CHECKUP_CRON_SECRET` (only the scheduler should have
+that secret, but two independent layers is safer than relying on one).
+
+The `--set-secrets` flags assume you've created those six secrets in
+Secret Manager first (`gcloud secrets create nextauth-secret --data-file=-`
+etc., one per var) — do that before this deploy command, not after.
+`NEXTAUTH_URL` has a bootstrapping wrinkle: you don't know the Cloud Run
+URL until after the first deploy. Deploy once without it (or with a
+placeholder), note the URL from the output, then re-run this same command
+with the real URL — `gcloud run deploy` on an existing service name
+updates it in place, it doesn't create a duplicate.
+
+Access the deployed app yourself via:
 
 ```bash
 gcloud run services proxy rc-projects-systems-monitoring-dashboard \
   --project=rc-datamart-report-082025 --region=us-central1
 ```
 
-or by granting specific users `roles/run.invoker` on the service. Adding a
-real auth layer (matching how `client-performance-dashboard` uses
-Auth0/Identity Platform) is a follow-up, not done here.
+or by granting specific users `roles/run.invoker` on the service, then
+sign in through `/login` for the app-level session (see
+`docs/first-admin-setup.md` for the first account).
 
 Note the deployed URL from the command output — you'll need it for step 4.
 
@@ -109,13 +136,21 @@ gcloud scheduler jobs create http offline-conversion-daily-check \
   --oidc-token-audience="<DEPLOYED_URL>"
 ```
 
-Replace `<DEPLOYED_URL>` with the URL from step 3's output.
+Replace `<DEPLOYED_URL>` with the URL from step 3's output. The scheduler's
+OIDC token gets it past the Cloud Run IAM layer via the standard
+`Authorization` header (handled automatically by `--oidc-service-account-email`
+above); the app itself additionally needs `CHECKUP_CRON_SECRET` in a
+separate `X-Checkup-Cron-Secret` header, since `Authorization` is already
+spoken for by the Cloud Run layer. Add
+`--headers="X-Checkup-Cron-Secret=<CHECKUP_CRON_SECRET value>"` to the
+`gcloud scheduler jobs create http` command above.
 
 ## 5. Smoke test
 
 ```bash
 curl -X POST "<DEPLOYED_URL>/api/offline-conversion-checkup" \
-  -H "Authorization: Bearer $(gcloud auth print-identity-token)"
+  -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "X-Checkup-Cron-Secret: <CHECKUP_CRON_SECRET value>"
 ```
 
 Should return JSON with a per-firm verdict for the 10 active firms, and

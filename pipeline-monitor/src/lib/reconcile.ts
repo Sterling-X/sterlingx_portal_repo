@@ -1,4 +1,9 @@
-import { ACTIVE_FIRMS, GADS_TARGETS, type GadsTarget } from "@/lib/accounts";
+import {
+  ACTIVE_FIRMS,
+  type FirmConfig,
+  GADS_TARGETS,
+  type GadsTarget,
+} from "@/lib/accounts";
 import { bigquery, tableExists } from "@/lib/bigquery";
 
 const REPORT_PROJECT = "rc-datamart-report-082025";
@@ -264,9 +269,11 @@ export async function checkupFirm(
   };
 }
 
-export async function runFullCheckup(): Promise<FirmCheckupResult[]> {
+export async function runFullCheckup(
+  firms: FirmConfig[] = ACTIVE_FIRMS,
+): Promise<FirmCheckupResult[]> {
   const results: FirmCheckupResult[] = [];
-  for (const firm of ACTIVE_FIRMS) {
+  for (const firm of firms) {
     try {
       results.push(await checkupFirm(firm.slug, firm.displayName));
     } catch (err) {
