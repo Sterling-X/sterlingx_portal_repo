@@ -2,9 +2,8 @@
 
 import { StatusBadge } from "@/components/status-badge";
 import type { FirmConfig } from "@/lib/accounts";
-import type { Role } from "@/lib/auth/users";
+import type { AppRole } from "@/lib/auth";
 import type { FirmCheckupResult } from "@/lib/reconcile";
-import { signOut } from "next-auth/react";
 import { useState } from "react";
 
 interface CheckupResponse {
@@ -14,7 +13,7 @@ interface CheckupResponse {
 }
 
 interface DashboardClientProps {
-  role: Role;
+  role: AppRole;
   userName: string;
   visibleActiveFirms: FirmConfig[];
   pausedFirms: FirmConfig[];
@@ -71,13 +70,9 @@ export function DashboardClient({
               </a>
             </>
           )}
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="hover:text-white/80"
-          >
+          <a href="/api/auth/logout" className="hover:text-white/80">
             Sign out
-          </button>
+          </a>
         </div>
       </div>
 

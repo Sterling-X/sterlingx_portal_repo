@@ -1,50 +1,17 @@
-import { auth } from "@/auth";
-import { NextResponse } from "next/server";
+import { withMiddlewareAuthRequired } from "@auth0/nextjs-auth0/edge";
 
-// Public: the auth pages themselves, NextAuth's own API routes, and the
-// checkup endpoint (which authenticates itself via session-or-cron-secret
-// inside the route handler -- see src/app/api/offline-conversion-checkup/route.ts).
-const PUBLIC_PATHS = [
-  "/login",
-  "/forgot-password",
-  "/reset-password",
-  "/api/auth",
-  "/api/offline-conversion-checkup",
-];
+export default withMiddlewareAuthRequired();
 
-function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
-}
-
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-
-  if (isPublicPath(pathname)) {
-    return NextResponse.next();
-  }
-
-  if (!req.auth) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (pathname.startsWith("/api/admin") && req.auth.user.role !== "admin") {
-    return NextResponse.json(
-      { error: "forbidden — admin role required" },
-      { status: 403 },
-    );
-  }
-
-  if (pathname.startsWith("/admin") && req.auth.user.role !== "admin") {
-    return NextResponse.redirect(new URL("/?forbidden=1", req.url));
-  }
-
-  return NextResponse.next();
-});
-
+// Pages only -- API routes each do their own getSession() + role check
+// (see src/lib/auth.ts and every route under src/app/api/), same pattern
+// as AI-Projects' client-performance-dashboard. Gating /api/* here too
+// would make withMiddlewareAuthRequired redirect an unauthenticated fetch
+// to the Auth0 login page (a 302 to HTML), which breaks every client-side
+// fetch() call expecting JSON -- the route-level checks return proper
+// 401/403 JSON instead. /api/offline-conversion-checkup is intentionally
+// excluded even from its own route-level Auth0 check for unauthenticated
+// callers -- it accepts a session OR the CHECKUP_CRON_SECRET header, see
+// that route for why.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/", "/admin/:path*"],
 };

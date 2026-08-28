@@ -1,10 +1,11 @@
-import { auth } from "@/auth";
+import { isAdmin } from "@/lib/auth";
 import { getEffectiveFirmConfig, setFirmActive } from "@/lib/firm-config";
+import { getSession } from "@auth0/nextjs-auth0";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  const session = await getSession();
+  if (!session || !isAdmin(session.user)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -13,8 +14,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  const session = await getSession();
+  if (!session || !isAdmin(session.user)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -36,7 +37,7 @@ export async function PATCH(request: Request) {
     body.slug,
     body.displayName,
     body.isActive,
-    session.user.email,
+    session.user.email as string,
   );
   return NextResponse.json({ ok: true });
 }
