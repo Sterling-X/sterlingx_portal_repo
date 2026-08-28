@@ -73,34 +73,57 @@ gcloud projects add-iam-policy-binding sterlingx-insights `
   --role="roles/bigquery.jobUser"
 ```
 
-Then grant **dataset-level** (not project-level) access — read-only on the
-four datasets this app reads (still in `rc-datamart-report-082025`), and
-write access on just its own dataset (now in `sterlingx-insights`). Easiest
-done in BigQuery Studio: for each dataset below, open Sharing → Permissions
-→ Add Principal → paste the SA email → assign the listed role:
+**Actual current grants (as of the Waterfall/Pacing generalization — already
+applied, not just planned):**
 
-| Project | Dataset | Role |
-|---|---|---|
-| `rc-datamart-report-082025` | `firms_origin_lead_table` | BigQuery Data Viewer |
-| `rc-datamart-report-082025` | `firms_origin_conversion_events` | BigQuery Data Viewer |
-| `rc-datamart-report-082025` | `gads_export_logs` | BigQuery Data Viewer |
-| `rc-datamart-report-082025` | `gads_validation_table` | BigQuery Data Viewer |
-| `sterlingx-insights` | `pipeline_monitoring` | BigQuery Data Editor |
-
-(This dataset now also holds `dashboard_firm_config` — the same Data
-Editor grant on the whole dataset already covers it, no extra grant
-needed.)
-
-(Or via `bq` CLI if yours works, one per read-only dataset:
 ```powershell
-bq add-iam-policy-binding --member="serviceAccount:$SA_EMAIL" --role="roles/bigquery.dataViewer" rc-datamart-report-082025:firms_origin_lead_table
-```
-)
+$SA = "serviceAccount:$SA_EMAIL"
 
-Do **not** grant `roles/bigquery.dataViewer` or `roles/editor` at the
-project level on `rc-datamart-report-082025` — that would give this
-dashboard read access to every dataset in that project, including
-client-sensitive data unrelated to offline conversion.
+# focused-sentry-464713-u0 — raw CRM/CT/webhook sources across every firm and
+# pipeline; project-level rather than dataset-scoped because this project
+# holds dozens of per-firm datasets and re-granting per new firm/pipeline
+# doesn't scale. Broader than the pattern below, deliberately.
+gcloud projects add-iam-policy-binding focused-sentry-464713-u0 `
+  --member=$SA --role="roles/bigquery.dataViewer"
+gcloud projects add-iam-policy-binding focused-sentry-464713-u0 `
+  --member=$SA --role="roles/dataform.viewer"
+
+# rc-datamart-report-082025 — same project-level tradeoff (Offline
+# Conversion's 4 datasets, Waterfall/Pacing's shared CTP trunk, and future
+# pipelines' tables all live here under datasets not enumerated up front).
+gcloud projects add-iam-policy-binding rc-datamart-report-082025 `
+  --member=$SA --role="roles/bigquery.dataViewer"
+gcloud projects add-iam-policy-binding rc-datamart-report-082025 `
+  --member=$SA --role="roles/dataform.viewer"
+
+# sterlingx-insights — Dataform read (BigQuery access here is the
+# jobUser + pipeline_monitoring Data Editor grants above/below already)
+gcloud projects add-iam-policy-binding sterlingx-insights `
+  --member=$SA --role="roles/dataform.viewer"
+```
+
+This is broader than the dataset-scoped least-privilege pattern originally
+planned for `rc-datamart-report-082025` (four specific datasets) — that
+narrower version is what you'd want if this app only ever covered Offline
+Conversion. With three pipelines now and more planned, project-level
+`bigquery.dataViewer` was chosen deliberately over re-granting per dataset
+every time a new firm or pipeline is added. Confirmed intentional.
+
+Still needed — a write grant, `sterlingx-insights.pipeline_monitoring`,
+Data Editor scoped to just that dataset (this one stays narrow, it's this
+app's own state, not read-only source data):
+
+```powershell
+# In BigQuery Studio: sterlingx-insights → pipeline_monitoring dataset →
+# Sharing → Permissions → Add Principal → rc-monitor-dashboard@... →
+# BigQuery Data Editor
+```
+
+The `roles/dataform.viewer` grants above are **read-only** — they support
+each pipeline's future diagnostic page reading `.sqlx` source to explain a
+failure. No write/commit access to any Dataform repository has been
+granted anywhere — that's a separate, much bigger decision (Phase 3,
+"Apply & Commit") not made yet.
 
 ### Grant Secret Manager access — in sterlingx-insights
 
